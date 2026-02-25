@@ -14,7 +14,7 @@ pipeline {
         // স্টেজ ১: ডকার ইমেজ প্রস্তুত করা (প্রথমবার টেনে আনবে, পরে ক্যাশ থেকে নেবে)
         stage('Prepare Docker Image') {
             steps {
-                sh 'docker pull php:8.3-cli' 
+                sh 'docker pull php:8.3-cli'  
             }
         }
 
