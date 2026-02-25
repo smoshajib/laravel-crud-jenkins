@@ -18,17 +18,16 @@ pipeline {
             steps {
                 sh '''
                     echo "📦 Installing Composer and PHP dependencies..."
-                    # Heredoc ব্যবহার করে কমান্ড পাঠানো হচ্ছে (কোনো কোটিং জটিলতা নেই)
-                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli bash << 'EOF'
-                    set -e
-                    apt-get update
-                    apt-get install -y curl unzip git
-                    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-                    php composer-setup.php --quiet
-                    php -r "unlink('composer-setup.php');"
-                    mv composer.phar /usr/local/bin/composer
-                    composer install --no-interaction --prefer-dist --optimize-autoloader
-EOF
+                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli bash -c "
+                        set -e
+                        apt-get update
+                        apt-get install -y curl unzip git
+                        php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\"
+                        php composer-setup.php --quiet
+                        php -r \"unlink('composer-setup.php');\"
+                        mv composer.phar /usr/local/bin/composer
+                        composer install --no-interaction --prefer-dist --optimize-autoloader
+                    "
                 '''
             }
         }
