@@ -14,11 +14,13 @@ pipeline {
             }
         }
 
-        stage('Check Script') {
+        stage('Check and Fix Script') {
             steps {
                 sh '''
-                    echo "🔍 Checking if install-composer.sh exists in workspace..."
+                    echo "🔍 Checking if install-composer.sh exists..."
                     ls -la install-composer.sh
+                    echo "🔧 Fixing line endings..."
+                    sed -i 's/\\r$//' install-composer.sh
                 '''
             }
         }
@@ -49,7 +51,7 @@ pipeline {
                         curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
                             -H "Authorization: Bearer $NF_TOKEN" \
                             -H "Content-Type: application/json" \
-                            -d '{"branch":"main"}"
+                            -d '{"branch":"main"}'
                     """
                 }
             }
