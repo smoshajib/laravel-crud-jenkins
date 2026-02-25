@@ -17,27 +17,18 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-echo "📦 Installing Composer and PHP dependencies..."
-docker run --rm -v "$PWD":/app -w /app php:8.3-cli bash << 'EOF'
-set -e
-apt-get update
-apt-get install -y curl unzip git
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php composer-setup.php --quiet
-php -r "unlink('composer-setup.php');"
-mv composer.phar /usr/local/bin/composer
-composer install --no-interaction --prefer-dist --optimize-autoloader
-EOF
-'''
+                    echo "📦 Installing Composer and PHP dependencies..."
+                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli bash /app/install-composer.sh
+                '''
             }
         }
 
         stage('SAST (PHPStan)') {
             steps {
                 sh '''
-echo "🔍 Running PHPStan static analysis..."
-docker run --rm -v "$PWD":/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
-'''
+                    echo "🔍 Running PHPStan static analysis..."
+                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
+                '''
             }
         }
 
@@ -45,12 +36,12 @@ docker run --rm -v "$PWD":/app -w /app php:8.3-cli vendor/bin/phpstan analyse --
             steps {
                 script {
                     sh """
-echo "🚀 Triggering Northflank deployment..."
-curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
-    -H "Authorization: Bearer $NF_TOKEN" \
-    -H "Content-Type: application/json" \
-    -d '{"branch":"main"}'
-"""
+                        echo "🚀 Triggering Northflank deployment..."
+                        curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
+                            -H "Authorization: Bearer $NF_TOKEN" \
+                            -H "Content-Type: application/json" \
+                            -d '{"branch":"main"}'
+                    """
                 }
             }
         }
