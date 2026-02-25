@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        NORTHFLANK_TOKEN = credentials('github_actions')
+        NORTHFLANK_TOKEN = credentials('github-actions')
         PROJECT_ID = 'laravel-crud-jenkins'        // তোমার Northflank প্রজেক্ট আইডি
         SERVICE_ID = 'laravel-crud-jenkins' // তোমার Northflank সার্ভিস আইডি
     }
