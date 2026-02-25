@@ -14,12 +14,21 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Check Script') {
             steps {
                 sh '''
-                    echo "📦 Installing Composer and PHP dependencies..."
-                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli bash /app/install-composer.sh
+                    echo "🔍 Checking if install-composer.sh exists in workspace..."
+                    ls -la install-composer.sh
                 '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh """
+                    echo "📦 Installing Composer and PHP dependencies..."
+                    docker run --rm -v ${env.WORKSPACE}:/app -w /app php:8.3-cli bash /app/install-composer.sh
+                """
             }
         }
 
@@ -27,7 +36,7 @@ pipeline {
             steps {
                 sh '''
                     echo "🔍 Running PHPStan static analysis..."
-                    docker run --rm -v "$PWD":/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
+                    docker run --rm -v ${env.WORKSPACE}:/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
                 '''
             }
         }
@@ -40,7 +49,7 @@ pipeline {
                         curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
                             -H "Authorization: Bearer $NF_TOKEN" \
                             -H "Content-Type: application/json" \
-                            -d '{"branch":"main"}'
+                            -d '{"branch":"main"}"
                     """
                 }
             }
