@@ -21,7 +21,15 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "📦 Installing Composer dependencies..."
+                    echo "📦 Installing Composer..."
+                    # Composer ইন্সটল করা (যদি না থাকে)
+                    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                    php composer-setup.php --quiet
+                    php -r "unlink('composer-setup.php');"
+                    # Composer-কে global path-এ move করা
+                    mv composer.phar /usr/local/bin/composer
+                    
+                    echo "📦 Installing PHP dependencies..."
                     composer install --no-interaction --prefer-dist --optimize-autoloader
                 '''
             }
