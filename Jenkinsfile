@@ -36,7 +36,7 @@ pipeline {
             echo '✅ Deployment triggered!'
         }
         failure {
-            echo '❌ Deployment failed!'
+            echo '❌ Deployment failed!' 
         }
     }
 }
