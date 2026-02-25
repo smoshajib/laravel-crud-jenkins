@@ -29,17 +29,17 @@ pipeline {
             steps {
                 sh """
                     echo "📦 Installing Composer and PHP dependencies..."
-                    docker run --rm -v ${env.WORKSPACE}:/app -w /app php:8.3-cli bash /app/install-composer.sh
+                    docker run --rm -v jenkins_home:/var/jenkins_home -w ${env.WORKSPACE} php:8.3-cli bash install-composer.sh
                 """
             }
         }
 
         stage('SAST (PHPStan)') {
             steps {
-                sh '''
+                sh """
                     echo "🔍 Running PHPStan static analysis..."
-                    docker run --rm -v ${env.WORKSPACE}:/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
-                '''
+                    docker run --rm -v jenkins_home:/var/jenkins_home -w ${env.WORKSPACE} php:8.3-cli vendor/bin/phpstan analyse --error-format=table
+                """
             }
         }
 
