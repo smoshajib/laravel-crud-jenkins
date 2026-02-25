@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'php:8.3-cli'          // PHP 8.3 CLI ইমেজ
-            args '-v /tmp:/tmp'           // প্রয়োজনীয় ভলিউম
-        }
-    }
+    agent any 
 
     environment {
         NF_TOKEN = credentials('jenkins-api')
@@ -13,31 +8,24 @@ pipeline {
     }
 
     stages {
-        stage('Prepare Environment') {
+        stage('Prepare Docker Image') {
             steps {
-                sh '''
-                    echo "📦 Installing curl, unzip, git and Composer..."
-                    apt-get update && apt-get install -y curl unzip git
-                    # Composer ইন্সটল
-                    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-                    php composer-setup.php --quiet
-                    php -r "unlink('composer-setup.php');"
-                    mv composer.phar /usr/local/bin/composer
-                '''
-            }
-        }
-
-        stage('Checkout') {
-            steps {
-                checkout scm
+                sh 'docker pull php:8.3-cli'
             }
         }
 
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "📦 Installing PHP dependencies..."
-                    composer install --no-interaction --prefer-dist --optimize-autoloader
+                    echo "📦 Installing Composer and PHP dependencies..."
+                    docker run --rm -v $PWD:/app -w /app php:8.3-cli bash -c "
+                        apt-get update && apt-get install -y curl unzip git &&
+                        php -r \"copy('https://getcomposer.org/installer', 'composer-setup.php');\" &&
+                        php composer-setup.php --quiet &&
+                        php -r \"unlink('composer-setup.php');\" &&
+                        mv composer.phar /usr/local/bin/composer &&
+                        composer install --no-interaction --prefer-dist --optimize-autoloader
+                    "
                 '''
             }
         }
@@ -46,7 +34,7 @@ pipeline {
             steps {
                 sh '''
                     echo "🔍 Running PHPStan static analysis..."
-                    vendor/bin/phpstan analyse --error-format=table
+                    docker run --rm -v $PWD:/app -w /app php:8.3-cli vendor/bin/phpstan analyse --error-format=table
                 '''
             }
         }
@@ -59,7 +47,7 @@ pipeline {
                         curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
                             -H "Authorization: Bearer $NF_TOKEN" \
                             -H "Content-Type: application/json" \
-                            -d '{"branch":"main"}'
+                            -d '{"branch":"main"}"
                     """
                 }
             }
