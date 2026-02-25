@@ -17,6 +17,16 @@ pipeline {
             }
         }
 
+        // নতুন স্টেজ: Composer dependencies install
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    echo "📦 Installing Composer dependencies..."
+                    composer install --no-interaction --prefer-dist --optimize-autoloader
+                '''
+            }
+        }
+
         // নতুন স্টেজ: SAST – PHPStan দিয়ে স্ট্যাটিক অ্যানালাইসিস
         stage('SAST (PHPStan)') {
             steps {
