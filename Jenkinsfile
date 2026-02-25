@@ -2,10 +2,10 @@ pipeline {
     agent any 
 
     environment {
-       
+        // Jenkins-এ সংরক্ষিত credential-এর নাম (যেখানে Northflank API টোকেন আছে)
         NF_TOKEN = credentials('jenkins-api')
         
-       
+        // Northflank প্রজেক্ট ও সার্ভিস আইডি
         PROJECT_ID = 'laravel-jenkins-project'
         SERVICE_ID = 'laravel-jenkins-service'
     }
@@ -14,6 +14,16 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+
+        // নতুন স্টেজ: SAST – PHPStan দিয়ে স্ট্যাটিক অ্যানালাইসিস
+        stage('SAST (PHPStan)') {
+            steps {
+                sh '''
+                    echo "🔍 Running PHPStan static analysis..."
+                    vendor/bin/phpstan analyse --error-format=table
+                '''
             }
         }
 
@@ -36,7 +46,7 @@ pipeline {
             echo '✅ Deployment triggered!'
         }
         failure {
-            echo '❌ Deployment failed!' 
+            echo '❌ Deployment failed!'
         }
     }
 }
