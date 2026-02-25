@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // Jenkins-এ সংরক্ষিত credential-এর নাম
+       
         NF_TOKEN = credentials('jenkins-api')
         
-        // Northflank প্রজেক্ট ও সার্ভিস আইডি
+       
         PROJECT_ID = 'laravel-jenkins-project'
         SERVICE_ID = 'laravel-jenkins-service'
     }
