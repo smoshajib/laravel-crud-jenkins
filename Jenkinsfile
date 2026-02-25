@@ -1,43 +1,47 @@
 pipeline {
-    agent any 
+    agent {
+        docker {
+            image 'php:8.3-cli'          // PHP 8.3 CLI ইমেজ
+            args '-v /tmp:/tmp'           // প্রয়োজনীয় ভলিউম
+        }
+    }
 
     environment {
-        // Jenkins-এ সংরক্ষিত credential-এর নাম (যেখানে Northflank API টোকেন আছে)
         NF_TOKEN = credentials('jenkins-api')
-        
-        // Northflank প্রজেক্ট ও সার্ভিস আইডি
         PROJECT_ID = 'laravel-jenkins-project'
         SERVICE_ID = 'laravel-jenkins-service'
     }
 
     stages {
+        stage('Prepare Environment') {
+            steps {
+                sh '''
+                    echo "📦 Installing curl, unzip, git and Composer..."
+                    apt-get update && apt-get install -y curl unzip git
+                    # Composer ইন্সটল
+                    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                    php composer-setup.php --quiet
+                    php -r "unlink('composer-setup.php');"
+                    mv composer.phar /usr/local/bin/composer
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        // নতুন স্টেজ: Composer dependencies install
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "📦 Installing PHP and Composer..."
-                    # PHP এবং প্রয়োজনীয় এক্সটেনশন ইনস্টল
-                    apt-get update && apt-get install -y php-cli php-mbstring php-xml php-zip unzip curl
-                    
-                    # Composer ইনস্টল
-                    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-                    php composer-setup.php --quiet
-                    php -r "unlink('composer-setup.php');"
-                    mv composer.phar /usr/local/bin/composer
-                    
                     echo "📦 Installing PHP dependencies..."
                     composer install --no-interaction --prefer-dist --optimize-autoloader
                 '''
             }
         }
 
-        // নতুন স্টেজ: SAST – PHPStan দিয়ে স্ট্যাটিক অ্যানালাইসিস
         stage('SAST (PHPStan)') {
             steps {
                 sh '''
@@ -51,6 +55,7 @@ pipeline {
             steps {
                 script {
                     sh """
+                        echo "🚀 Triggering Northflank deployment..."
                         curl -X POST "https://api.northflank.com/v1/projects/$PROJECT_ID/services/$SERVICE_ID/deployment" \
                             -H "Authorization: Bearer $NF_TOKEN" \
                             -H "Content-Type: application/json" \
